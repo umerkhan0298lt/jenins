@@ -10,8 +10,6 @@ df = df.withColumn("collision_type", when(df["collision_type"] == '', mode_value
 df = df.withColumn("property_damage", when(df["property_damage"] == '', 'NO').otherwise(df["property_damage"]))
 df = df.withColumn("police_report_available", when(df["police_report_available"] == '', 'NO').otherwise(df["police_report_available"]))
 
-# df.select('property_damage','collision_type','police_report_available').show()
-
 fraud_counts = df.groupBy('fraud_reported').count().orderBy('count', ascending=False).collect()
 
 label_fraud = [fraud_counts[0][0], fraud_counts[1][0]]
