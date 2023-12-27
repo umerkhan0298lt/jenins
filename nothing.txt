@@ -36,6 +36,5 @@ for i in df_new.columns[:10]:
 # df = df.drop)("mean_target")
 df.columns
 # Use the mean target values as the encoded values
-# df.select('fraud_reported', 'auto_model').show(5)
 # df_new.select('fraud_reported', 'auto_model').show(5)
 
