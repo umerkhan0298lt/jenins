@@ -1,0 +1,41 @@
+spark = SparkSession.builder.master('local[*]').config("spark.driver.memory", "15g").getOrCreate()
+df = spark.read.csv('data.csv', header=True)
+# df.stat.corr('months_as_customer', 'age')
+# df.head()
+df=df.replace('?','')
+
+mode_value_of_collision_type = df.groupBy('collision_type').count().orderBy('count', ascending=False).first()[0]
+
+df = df.withColumn("collision_type", when(df["collision_type"] == '', mode_value_of_collision_type).otherwise(df["collision_type"]))
+df = df.withColumn("property_damage", when(df["property_damage"] == '', 'NO').otherwise(df["property_damage"]))
+df = df.withColumn("police_report_available", when(df["police_report_available"] == '', 'NO').otherwise(df["police_report_available"]))
+
+# df.select('property_damage','collision_type','police_report_available').show()
+
+fraud_counts = df.groupBy('fraud_reported').count().orderBy('count', ascending=False).collect()
+
+label_fraud = [fraud_counts[0][0], fraud_counts[1][0]]
+size_fraud = [fraud_counts[0][1], fraud_counts[1][1]]
+
+df = df.withColumn('fraud_reported', when(df['fraud_reported'] == 'Y', 0).otherwise(1))
+# df.select('fraud_reported').show()
+
+# Calculate mean target value for each category
+# means = df.groupBy("auto_model").agg({"fraud_reported": "mean"}).withColumnRenamed("avg(fraud_reported)", "mean_target")
+
+# Join the means DataFrame with the original data
+
+
+df_new = df.alias("copy")
+for i in df_new.columns[:10]:
+# for i in ['auto_model']:
+    df = df.join(df.groupBy(i).agg({"fraud_reported": "mean"}).withColumnRenamed("avg(fraud_reported)", "mean_target"), on=i, how="left")
+    df = df.withColumn(i, col("mean_target")).drop("mean_target")
+
+# Drop the "mean_target" column if you don't need it anymore
+# df = df.drop)("mean_target")
+df.columns
+# Use the mean target values as the encoded values
+# df.select('fraud_reported', 'auto_model').show(5)
+# df_new.select('fraud_reported', 'auto_model').show(5)
+
